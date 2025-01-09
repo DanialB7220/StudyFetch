@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface FlashcardSet {
   _id: string;
@@ -18,16 +18,15 @@ const FlashcardSidebar = () => {
       try {
         setIsLoading(true);
         setError(null);
-        
-        // Use absolute URL in production
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
-        const response = await fetch(`${baseUrl}/api/flashcards`, {
-          method: 'GET',
+
+        // Directly use the relative API route
+        const response = await fetch("/api/flashcards", {
+          method: "GET",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           // Add cache control
-          cache: 'no-store',
+          cache: "no-store",
         });
 
         if (!response.ok) {
@@ -35,16 +34,16 @@ const FlashcardSidebar = () => {
         }
 
         const data = await response.json();
-        
+
         // Validate the response data structure
         if (!Array.isArray(data.flashcardSets)) {
-          throw new Error('Invalid response format');
+          throw new Error("Invalid response format");
         }
 
         setFlashcardSets(data.flashcardSets);
       } catch (error) {
-        console.error('Error fetching flashcard sets:', error);
-        setError('Failed to load flashcard sets. Please try again later.');
+        console.error("Error fetching flashcard sets:", error);
+        setError("Failed to load flashcard sets. Please try again later.");
       } finally {
         setIsLoading(false);
       }
@@ -69,8 +68,8 @@ const FlashcardSidebar = () => {
     return (
       <div className="p-4 text-red-500">
         {error}
-        <button 
-          onClick={() => window.location.reload()} 
+        <button
+          onClick={() => window.location.reload()}
           className="mt-2 text-blue-500 underline"
         >
           Try again
@@ -83,11 +82,7 @@ const FlashcardSidebar = () => {
     <div className="p-4 space-y-2">
       {flashcardSets.length > 0 ? (
         flashcardSets.map((set) => (
-          <Link 
-            key={set._id} 
-            href={`/flashcards/${set._id}`}
-            className="block"
-          >
+          <Link key={set._id} href={`/flashcards/${set._id}`} className="block">
             <div className="p-3 rounded-lg bg-green-500 text-white cursor-pointer hover:bg-green-600 transition-colors">
               {set.topic}
             </div>
