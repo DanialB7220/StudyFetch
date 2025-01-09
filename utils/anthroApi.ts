@@ -4,40 +4,38 @@ import { Anthropic } from '@anthropic-ai/sdk';
 import connectMongo from '@/utils/mongo';
 import Flashcard from '@/models/Flashcard';
 
-interface FlashcardData {
+interface Flashcard {
   term: string;
   definition: string;
 }
 
-// Type guard to validate flashcard structure
-function isValidFlashcardInput(input: any): input is { question: string; answer: string } {
-  return (
-    typeof input === 'object' &&
-    input !== null &&
-    typeof input.question === 'string' &&
-    typeof input.answer === 'string'
-  );
+interface ToolUseInput {
+  flashcards: {
+    question: string;
+    answer: string;
+  }[];
 }
 
-// Type guard to validate the tool response
-function isValidToolResponse(content: any): content is { type: string; name: string; input: { flashcards: any[] } } {
-  return (
-    typeof content === 'object' &&
-    content !== null &&
-    content.type === 'tool_use' &&
-    typeof content.name === 'string' &&
-    typeof content.input === 'object' &&
-    content.input !== null &&
-    Array.isArray(content.input.flashcards)
-  );
+interface ToolUseContent {
+  type: string;
+  name: string;
+  input?: ToolUseInput;
+}
+
+interface AnthropicResponse {
+  content: ToolUseContent[];
 }
 
 const anthroApiKey = process.env.ANYPHROPIC_API_KEY;
+if (!anthroApiKey) {
+  throw new Error('Anthropic API key is missing in environment variables.');
+}
+
 const anthropic = new Anthropic({ apiKey: anthroApiKey });
 
-export async function callAiTutor(prompt: string): Promise<FlashcardData[]> {
+export async function callAiTutor(prompt: string): Promise<Flashcard[]> {
   await connectMongo();
-  
+
   try {
     const response = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20241022',
@@ -75,33 +73,37 @@ export async function callAiTutor(prompt: string): Promise<FlashcardData[]> {
       tool_choice: { type: "tool", name: "flashcard_generator" },
     });
 
-    // Find and validate the tool response
-    const toolContent = response.content.find(item => 
-      isValidToolResponse(item) && item.name === 'flashcard_generator'
+    console.log('Full response:', JSON.stringify(response, null, 2));
+
+    // Cast response to AnthropicResponse type
+    const anthropicResponse = response as unknown as AnthropicResponse;
+
+    // Extract the correct `tool_use` object and its flashcards
+    const toolUse = anthropicResponse.content.find(
+      (item) =>
+        item.type === 'tool_use' &&
+        item.name === 'flashcard_generator'
     );
 
-    if (!toolContent || !isValidToolResponse(toolContent)) {
-      console.warn('No valid flashcards found in response');
+    if (!toolUse || !toolUse.input?.flashcards) {
+      console.warn('No flashcards generated from the response.');
       return [];
     }
 
-    // Validate and transform each flashcard
-    const flashcards = toolContent.input.flashcards
-      .filter(isValidFlashcardInput)
-      .map(fc => ({
-        term: fc.question,
-        definition: fc.answer,
-      }));
+    const flashcards = toolUse.input.flashcards.map((fc) => ({
+      term: fc.question,
+      definition: fc.answer,
+    }));
 
     const newFlashcards = new Flashcard({
       topic: prompt,
-      flashcards: flashcards,
+      flashcards,
     });
 
     await newFlashcards.save();
     console.log('Generated flashcards:', flashcards);
-    return flashcards;
 
+    return flashcards;
   } catch (error) {
     console.error('Error calling AI Tutor:', error);
     throw new Error('Failed to generate flashcards');
