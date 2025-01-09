@@ -21,9 +21,7 @@ const ChatBox = () => {
   const handleSendMessage = async () => {
     if (!input.trim()) return;
   
-    // Add user message to the chat
-    const newMessages = [...messages, { text: input, sender: 'user' }];
-    setMessages(newMessages);
+    setMessages([...messages, { text: input, sender: 'user' }]);
     setInput('');
   
     try {
@@ -31,58 +29,74 @@ const ChatBox = () => {
       const response = await callAiTutor(input);
       console.log('AI Tutor Response:', response); // Debug log
   
+      // Check if flashcards are returned in the AI response
       if (response.flashcards && Array.isArray(response.flashcards)) {
-        // Create flashcard set in the database
-        const flashcardSetCreated = await createFlashcardSet(response.flashcards, 'Generated Flashcards');
-  
-        if (flashcardSetCreated) {
-          // Confirm the flashcard set was created successfully
-          setMessages([
-            ...newMessages,
-            { text: 'Here are your flashcards! They have been saved successfully.', sender: 'ai' },
-          ]);
-        } else {
-          // Flashcards weren't created despite AI generating them
-          setMessages([
-            ...newMessages,
-            { text: 'I generated flashcards but couldn’t save them. Please try again.', sender: 'ai' },
-          ]);
-        }
-      } else if (response.content) {
-        // Handle general AI response
+        // Assuming you want to send these flashcards to the database
+        await createFlashcardSet(response.flashcards, 'Generated Flashcards');
         setMessages([
-          ...newMessages,
+          ...messages,
+          { text: input, sender: 'user' },
+          { text: 'Here are your flashcards!', sender: 'ai' },
+        ]);
+      } else if (response.content) {
+        // Handle general content response from AI
+        setMessages([
+          ...messages,
+          { text: input, sender: 'user' },
           { text: response.content, sender: 'ai' },
         ]);
       } else {
-        // No valid response, flashcards, or content
+        // Handle case where no valid response is found
         setMessages([
-          ...newMessages,
-          { text: 'Refresh the page to view flashcards.', sender: 'ai' },
+          ...messages,
+          { text: input, sender: 'user' },
+          { text: 'Refresh page to load flashcards.', sender: 'ai' },
         ]);
       }
     } catch (error) {
       console.error('Error:', error);
       setMessages([
-        ...newMessages,
+        ...messages,
+        { text: input, sender: 'user' },
         { text: 'Sorry, something went wrong!', sender: 'ai' },
       ]);
     }
   };
   
+  // Function to create a flashcard set
+  const createFlashcardSet = async (flashcards: Flashcard[], topic: string) => {
+    try {
+      const response = await fetch('/api/flashcards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          flashcards, // The generated flashcards
+          topic,      // You can pass the topic here
+        }),
+      });
+  
+      if (response.ok) {
+        console.log('Flashcard set created successfully!');
+      } else {
+        console.error('Failed to create flashcard set');
+      }
+    } catch (error) {
+      console.error('Error creating flashcard set:', error);
+    }
+  };
   
   return (
     <div>
       <div className="space-y-4 mb-4">
         {messages.map((msg, index) => (
-         <div
-         key={index}
-         className={`p-3 rounded-lg max-w-[80%] ${
-           msg.sender === 'user' ? 'bg-green-200 self-end' : 'bg-blue-100 self-start'
-         } text-black`}
-          >
-            <p>{msg.text}</p>
-          </div>
+          <div
+          key={index}
+          className={`p-3 rounded-lg max-w-[80%] ${
+            msg.sender === 'user' ? 'bg-green-200 self-end' : 'bg-blue-100 self-start'
+          } text-black`}
+        >
+          <p>{msg.text}</p>
+        </div>        
         ))}
       </div>
 
