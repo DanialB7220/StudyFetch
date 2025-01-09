@@ -7,7 +7,7 @@ const Home = () => {
       {/* Make the "AI Tutor" text a clickable link that redirects to the homepage */}
       <h1 className="text-4xl font-bold text-center mb-6 text-black">
         <Link href="/" className="text-blue-600 hover:underline">
-          AI Tutor
+          AI Tutor Create flashacrds you can flip by clicking
         </Link>
       </h1>
       <ChatBox />
