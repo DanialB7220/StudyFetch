@@ -24,19 +24,44 @@ const ChatBox = () => {
     setMessages([...messages, { text: input, sender: 'user' }]);
     setInput('');
   
+    try {
       // Call the AI Tutor with the user input
       const response = await callAiTutor(input);
       console.log('AI Tutor Response:', response); // Debug log
   
       // Check if flashcards are returned in the AI response
-        // Handle case where no valid response is foun
+      if (response.flashcards && Array.isArray(response.flashcards)) {
+        // Assuming you want to send these flashcards to the database
+        await createFlashcardSet(response.flashcards, 'Generated Flashcards');
+        setMessages([
+          ...messages,
+          { text: input, sender: 'user' },
+          { text: 'Here are your flashcards!', sender: 'ai' },
+        ]);
+      } else if (response.content) {
+        // Handle general content response from AI
+        setMessages([
+          ...messages,
+          { text: input, sender: 'user' },
+          { text: response.content, sender: 'ai' },
+        ]);
+      } else {
+        // Handle case where no valid response is found
+        setMessages([
+          ...messages,
+          { text: input, sender: 'user' },
+          { text: 'Refresh to view flashacrds!', sender: 'ai' },
+        ]);
+      }
+    } catch (error) {
+      console.error('Error:', error);
       setMessages([
         ...messages,
         { text: input, sender: 'user' },
-        { text: 'Refresh page to view flashcards!', sender: 'ai' },
+        { text: 'Sorry, something went wrong!', sender: 'ai' },
       ]);
-    
-  }
+    }
+  };
   
   // Function to create a flashcard set
   const createFlashcardSet = async (flashcards: Flashcard[], topic: string) => {
@@ -64,14 +89,15 @@ const ChatBox = () => {
     <div>
       <div className="space-y-4 mb-4">
         {messages.map((msg, index) => (
-          <div
-          key={index}
-          className={`p-3 rounded-lg max-w-[80%] ${
-            msg.sender === 'user' ? 'bg-green-200 self-end' : 'bg-blue-100 self-start'
-          } text-black`}
-        >
-          <p>{msg.text}</p>
-        </div>        
+        <div
+        key={index}
+        className={`p-3 rounded-lg max-w-[80%] ${
+          msg.sender === 'user' ? 'bg-green-200 self-end' : 'bg-blue-100 self-start'
+        } text-black`}
+      >
+        <p>{msg.text}</p>
+      </div>
+      
         ))}
       </div>
 
@@ -95,3 +121,4 @@ const ChatBox = () => {
 };
 
 export default ChatBox;
+
