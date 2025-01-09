@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { callAiTutor } from '@/utils/anthroApi';
 
-// Flashcard Interface for sending to backend
+// Flashcard Interface
 interface Flashcard {
   term: string;
   definition: string;
@@ -20,37 +20,30 @@ const ChatBox = () => {
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
-  
+
     setMessages([...messages, { text: input, sender: 'user' }]);
     setInput('');
-  
+
     try {
       // Call the AI Tutor with the user input
       const response = await callAiTutor(input);
       console.log('AI Tutor Response:', response); // Debug log
-  
+
       // Check if flashcards are returned in the AI response
-      if (response.flashcards && Array.isArray(response.flashcards)) {
-        // Assuming you want to send these flashcards to the database
-        await createFlashcardSet(response.flashcards, 'Generated Flashcards');
+      if (response.length > 0) {
+        // Assuming response is an array of Flashcards
+        await createFlashcardSet(response, 'Generated Flashcards');
         setMessages([
           ...messages,
           { text: input, sender: 'user' },
           { text: 'Here are your flashcards!', sender: 'ai' },
         ]);
-      } else if (response.content) {
-        // Handle general content response from AI
-        setMessages([
-          ...messages,
-          { text: input, sender: 'user' },
-          { text: response.content, sender: 'ai' },
-        ]);
       } else {
-        // Handle case where no valid response is found
+        // Handle case where no flashcards are generated
         setMessages([
           ...messages,
           { text: input, sender: 'user' },
-          { text: 'Refresh to view flashacrds!', sender: 'ai' },
+          { text: 'No flashcards were generated. Try asking something else!', sender: 'ai' },
         ]);
       }
     } catch (error) {
@@ -58,11 +51,11 @@ const ChatBox = () => {
       setMessages([
         ...messages,
         { text: input, sender: 'user' },
-        { text: 'Sorry, something went wrong!', sender: 'ai' },
+        { text: 'Refresh Page to load cards!', sender: 'ai' },
       ]);
     }
   };
-  
+
   // Function to create a flashcard set
   const createFlashcardSet = async (flashcards: Flashcard[], topic: string) => {
     try {
@@ -71,10 +64,10 @@ const ChatBox = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           flashcards, // The generated flashcards
-          topic,      // You can pass the topic here
+          topic, // You can pass the topic here
         }),
       });
-  
+
       if (response.ok) {
         console.log('Flashcard set created successfully!');
       } else {
@@ -84,20 +77,19 @@ const ChatBox = () => {
       console.error('Error creating flashcard set:', error);
     }
   };
-  
+
   return (
     <div>
       <div className="space-y-4 mb-4">
         {messages.map((msg, index) => (
-        <div
-        key={index}
-        className={`p-3 rounded-lg max-w-[80%] ${
-          msg.sender === 'user' ? 'bg-green-200 self-end' : 'bg-blue-100 self-start'
-        } text-black`}
-      >
-        <p>{msg.text}</p>
-      </div>
-      
+          <div
+            key={index}
+            className={`p-3 rounded-lg max-w-[80%] ${
+              msg.sender === 'user' ? 'bg-green-200 self-end' : 'bg-blue-100 self-start'
+            } text-black`}
+          >
+            <p>{msg.text}</p>
+          </div>
         ))}
       </div>
 
@@ -121,4 +113,3 @@ const ChatBox = () => {
 };
 
 export default ChatBox;
-
