@@ -36,7 +36,7 @@ const ChatBox = () => {
         setMessages([
           ...messages,
           { text: input, sender: 'user' },
-          { text: 'Here are your flashcards refresh page!', sender: 'ai' },
+          { text: 'Here are your flashcards, refresh page!', sender: 'ai' },
         ]);
       } else {
         // Handle case where no flashcards are generated
