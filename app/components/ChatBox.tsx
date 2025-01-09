@@ -75,11 +75,11 @@ const ChatBox = () => {
     <div>
       <div className="space-y-4 mb-4">
         {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={p-3 rounded-lg max-w-[80%] ${
-              msg.sender === 'user' ? 'bg-green-200 self-end' : 'bg-blue-100 self-start'
-            } text-black}
+         <div
+         key={index}
+         className={`p-3 rounded-lg max-w-[80%] ${
+           msg.sender === 'user' ? 'bg-green-200 self-end' : 'bg-blue-100 self-start'
+         } text-black`}
           >
             <p>{msg.text}</p>
           </div>
