@@ -51,7 +51,7 @@ const ChatBox = () => {
       setMessages([
         ...messages,
         { text: input, sender: 'user' },
-        { text: 'Refresh Page to load cards!', sender: 'ai' },
+        { text: 'Refresh Page to load cards and click on flashcards to flip them!!', sender: 'ai' },
       ]);
     }
   };
