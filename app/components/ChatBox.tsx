@@ -24,44 +24,19 @@ const ChatBox = () => {
     setMessages([...messages, { text: input, sender: 'user' }]);
     setInput('');
   
-    try {
       // Call the AI Tutor with the user input
       const response = await callAiTutor(input);
       console.log('AI Tutor Response:', response); // Debug log
   
       // Check if flashcards are returned in the AI response
-      if (response.flashcards && Array.isArray(response.flashcards)) {
-        // Assuming you want to send these flashcards to the database
-        await createFlashcardSet(response.flashcards, 'Generated Flashcards');
-        setMessages([
-          ...messages,
-          { text: input, sender: 'user' },
-          { text: 'Here are your flashcards!', sender: 'ai' },
-        ]);
-      } else if (response.content) {
-        // Handle general content response from AI
-        setMessages([
-          ...messages,
-          { text: input, sender: 'user' },
-          { text: response.content, sender: 'ai' },
-        ]);
-      } else {
-        // Handle case where no valid response is found
-        setMessages([
-          ...messages,
-          { text: input, sender: 'user' },
-          { text: 'Refresh page to load flashcards.', sender: 'ai' },
-        ]);
-      }
-    } catch (error) {
-      console.error('Error:', error);
+        // Handle case where no valid response is foun
       setMessages([
         ...messages,
         { text: input, sender: 'user' },
-        { text: 'Sorry, something went wrong!', sender: 'ai' },
+        { text: 'Refresh page to view flashcards!', sender: 'ai' },
       ]);
-    }
-  };
+    
+  }
   
   // Function to create a flashcard set
   const createFlashcardSet = async (flashcards: Flashcard[], topic: string) => {
