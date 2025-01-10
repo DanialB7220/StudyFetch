@@ -58,7 +58,6 @@ export async function chatWithAiTutor(
 
     // Only add tools if flashcard generation is requested
     if (generateFlashcards) {
-      // Update the API parameters to also ask for a topic
       apiParams.tools = [
         {
           name: "flashcard_generator",
@@ -107,11 +106,11 @@ export async function chatWithAiTutor(
     } else {
       // If tool_use response, handle accordingly
       const toolUse = response.content.find(
-        (item: any) => item.type === 'tool_use' && item.name === 'flashcard_generator'
+        (item: Record<string, any>) => item.type === 'tool_use' && item.name === 'flashcard_generator'
       );
       if (toolUse?.input?.flashcards) {
         // If flashcards were generated, we'll save them but don't expect a direct 'text' response
-        messageText = 'Flashcards generated successfully refresh pgae to view and click on card to flip!';
+        messageText = 'Flashcards generated successfully refresh page to view and click on card to flip!';
       }
     }
 
@@ -128,7 +127,7 @@ export async function chatWithAiTutor(
     let flashcards = null;
     if (generateFlashcards) {
       const toolUse = response.content.find(
-        (item: any) => 
+        (item: Record<string, any>) => 
           item.type === 'tool_use' && 
           item.name === 'flashcard_generator'
       );
