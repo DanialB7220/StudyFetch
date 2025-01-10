@@ -106,9 +106,11 @@ export async function chatWithAiTutor(
     } else {
       // If tool_use response, handle accordingly
       const toolUse = response.content.find(
-        (item: Record<string, any>) => item.type === 'tool_use' && item.name === 'flashcard_generator'
+        (item: any) => item.type === 'tool_use' && item.name === 'flashcard_generator'
       );
-      if (toolUse?.input?.flashcards) {
+
+      // Type assertion to avoid type errors
+      if ((toolUse as any)?.input?.flashcards) {
         // If flashcards were generated, we'll save them but don't expect a direct 'text' response
         messageText = 'Flashcards generated successfully refresh page to view and click on card to flip!';
       }
@@ -127,20 +129,20 @@ export async function chatWithAiTutor(
     let flashcards = null;
     if (generateFlashcards) {
       const toolUse = response.content.find(
-        (item: Record<string, any>) => 
+        (item: any) => 
           item.type === 'tool_use' && 
           item.name === 'flashcard_generator'
       );
 
       // Ensure that we correctly handle the case where flashcards are generated
-      if (toolUse?.input?.flashcards) {
-        flashcards = toolUse.input.flashcards.map((fc: any) => ({
+      if ((toolUse as any)?.input?.flashcards) {
+        flashcards = (toolUse as any).input.flashcards.map((fc: any) => ({
           term: fc.question,
           definition: fc.answer,
         }));
 
         const newFlashcards = new Flashcard({
-          topic: toolUse.input.topic || 'Untitled Topic',
+          topic: (toolUse as any).input.topic || 'Untitled Topic',
           flashcards: flashcards,
         });
         await newFlashcards.save();
