@@ -132,7 +132,7 @@ export async function chatWithAiTutor(
       });
       await newFlashcards.save();
 
-      messageText = "Flashcards generated successfully! Refresh the page to view them.";
+      messageText = "Flashcards generated successfully! Refresh the page to view them and click on flashcards to flip them.";
     } else {
       // Handle regular text message blocks
       const aiMessage = response.content.find(isTextBlock);
