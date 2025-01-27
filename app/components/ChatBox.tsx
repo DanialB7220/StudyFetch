@@ -25,24 +25,20 @@ const ChatBox = () => {
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;  // Prevent empty input from being sent
-  
+
     const userMessage: Message = { text: input, sender: 'user' };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
-  
+
     try {
-      const isFlashcardRequest = input.toLowerCase().includes('flashcard') || 
-                                input.toLowerCase().includes('flash card');
-  
       const response = await chatWithAiTutor(
         input.trim(),  // Ensure prompt is not empty
-        conversationId,
-        isFlashcardRequest
+        conversationId
       );
-  
+
       if (response.flashcards) {
         await createFlashcardSet(response.flashcards, input);
-        
+
         const aiMessage: Message = { 
           text: response.message + "\n\nI've created flashcards based on your request. You can view them in your flashcards section!", 
           sender: 'ai' 
@@ -64,7 +60,7 @@ const ChatBox = () => {
       setMessages(prev => [...prev, errorMessage]);
     }
   };
-  
+
   const createFlashcardSet = async (flashcards: Flashcard[], topic: string) => {
     try {
       const response = await fetch('/api/flashcards', {
