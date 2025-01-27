@@ -1,3 +1,54 @@
+"use server";
+
+import { Anthropic } from "@anthropic-ai/sdk";
+import connectMongo from "@/utils/mongo";
+import Flashcard from "@/models/Flashcard";
+import message from "@/models/Message";
+
+// Define types for response content blocks
+interface ContentBlock {
+  type: string; // General type field
+}
+
+interface TextBlock extends ContentBlock {
+  type: "text";
+  text: string;
+}
+
+interface ToolUseBlock extends ContentBlock {
+  type: "tool_use";
+  name: string;
+  input?: {
+    flashcards?: {
+      question: string;
+      answer: string;
+    }[];
+    topic?: string;
+  };
+}
+
+type ResponseContent = TextBlock | ToolUseBlock;
+
+const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
+
+if (!anthropicApiKey) {
+  throw new Error("ANTHROPIC_API_KEY is not set in environment variables");
+}
+
+const anthropic = new Anthropic({
+  apiKey: anthropicApiKey,
+});
+
+// Type guards
+function isToolUseBlock(block: ContentBlock): block is ToolUseBlock {
+  return block.type === "tool_use" && "input" in block;
+}
+
+function isTextBlock(block: ContentBlock): block is TextBlock {
+  return block.type === "text" && "text" in block;
+}
+
+// Main function
 export async function chatWithAiTutor(
   prompt: string,
   conversationId: string
