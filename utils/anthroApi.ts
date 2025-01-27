@@ -1,54 +1,3 @@
-"use server";
-
-import { Anthropic } from "@anthropic-ai/sdk";
-import connectMongo from "@/utils/mongo";
-import Flashcard from "@/models/Flashcard";
-import message from "@/models/Message";
-
-// Define types for response content blocks
-interface ContentBlock {
-  type: string; // General type field
-}
-
-interface TextBlock extends ContentBlock {
-  type: "text";
-  text: string;
-}
-
-interface ToolUseBlock extends ContentBlock {
-  type: "tool_use";
-  name: string;
-  input?: {
-    flashcards?: {
-      question: string;
-      answer: string;
-    }[];
-    topic?: string;
-  };
-}
-
-type ResponseContent = TextBlock | ToolUseBlock;
-
-const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
-
-if (!anthropicApiKey) {
-  throw new Error("ANTHROPIC_API_KEY is not set in environment variables");
-}
-
-const anthropic = new Anthropic({
-  apiKey: anthropicApiKey,
-});
-
-// Type guards
-function isToolUseBlock(block: ContentBlock): block is ToolUseBlock {
-  return block.type === "tool_use" && "input" in block;
-}
-
-function isTextBlock(block: ContentBlock): block is TextBlock {
-  return block.type === "text" && "text" in block;
-}
-
-// Main function
 export async function chatWithAiTutor(
   prompt: string,
   conversationId: string
@@ -119,7 +68,7 @@ export async function chatWithAiTutor(
         isToolUseBlock(item) && item.name === "flashcard_generator"
     );
 
-    if (toolUse?.input?.flashcards) {
+    if (toolUse && isToolUseBlock(toolUse) && toolUse.input?.flashcards) {
       // If the tool was used, generate flashcards
       flashcards = toolUse.input.flashcards.map((fc) => ({
         term: fc.question,
@@ -132,7 +81,7 @@ export async function chatWithAiTutor(
       });
       await newFlashcards.save();
 
-      messageText = "Flashcards generated successfully! Refresh the page to view them and click on flashcards to flip them.";
+      messageText = "Flashcards generated successfully! Refresh the page to view them.";
     } else {
       // Handle regular text message blocks
       const aiMessage = response.content.find(isTextBlock);
